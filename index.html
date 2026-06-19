@@ -167,7 +167,7 @@ const DEVICE_SUPABASE_HEADERS={
   "Content-Type":"application/json"
 };
 
-const STAFF=[
+const DEFAULT_STAFF=[
   {id:1,name:"田中 一郎",color:"#378ADD"},
   {id:2,name:"鈴木 花子",color:"#1D9E75"},
   {id:3,name:"佐藤 健二",color:"#D85A30"},
@@ -175,6 +175,27 @@ const STAFF=[
   {id:5,name:"伊藤 大輔",color:"#BA7517"},
   {id:6,name:"渡辺 さくら",color:"#7F77DD"},
 ];
+let STAFF=DEFAULT_STAFF.map(s=>({...s}));
+async function fetchStaffNames(){
+  try{
+    const res=await fetch(`${SUPABASE_URL}/rest/v1/staff_names?select=*`,{headers:SUPABASE_HEADERS});
+    if(!res.ok)return;
+    const data=await res.json();
+    data.forEach(row=>{
+      const s=STAFF.find(x=>x.id===row.staff_id);
+      if(s)s.name=row.name;
+    });
+  }catch(e){console.warn("fetchStaffNames error",e);}
+}
+async function saveStaffName(staffId,name){
+  try{
+    await fetch(`${SUPABASE_URL}/rest/v1/staff_names`,{
+      method:"POST",
+      headers:{...SUPABASE_HEADERS,"Prefer":"resolution=merge-duplicates,return=representation"},
+      body:JSON.stringify({staff_id:staffId,name:name})
+    });
+  }catch(e){console.warn("saveStaffName error",e);}
+}
 const DAYS=["日","月","火","水","木","金","土"];
 const HOLIDAYS={
   "2025-01-01":"元日","2025-01-13":"成人の日","2025-02-11":"建国記念の日","2025-02-23":"天皇誕生日","2025-03-20":"春分の日","2025-04-29":"昭和の日","2025-05-03":"憲法記念日","2025-05-04":"みどりの日","2025-05-05":"こどもの日","2025-07-21":"海の日","2025-08-11":"山の日","2025-09-15":"敬老の日","2025-09-23":"秋分の日","2025-10-13":"スポーツの日","2025-11-03":"文化の日","2025-11-23":"勤労感謝の日","2025-11-24":"振替休日",
@@ -334,7 +355,7 @@ function attachSwipe(el){
 
 async function doSync(){
   state.syncMsg="同期中…";render();
-  await Promise.all([fetchEvents(),fetchDevices()]);
+  await Promise.all([fetchEvents(),fetchDevices(),fetchStaffNames()]);
   state.syncMsg="同期しました ✓";render();
   setTimeout(()=>{state.syncMsg="";render();},2000);
 }
@@ -628,14 +649,31 @@ function buildStaffPicker(){
   const sheet=document.createElement("div");sheet.className="staff-pick-sheet";
   const handle=document.createElement("div");handle.className="sheet-handle";sheet.appendChild(handle);
   const h3=document.createElement("h3");h3.textContent="この端末の担当スタッフ";sheet.appendChild(h3);
-  const note=document.createElement("p");note.className="staff-pick-note";note.textContent="選択したスタッフで予定が登録されます";sheet.appendChild(note);
+  const note=document.createElement("p");note.className="staff-pick-note";note.textContent="選択したスタッフで予定が登録されます。鉛筆アイコンで名前を編集できます。";sheet.appendChild(note);
   STAFF.forEach(s=>{
-    const btn=document.createElement("button");btn.className="staff-option";
+    const row=document.createElement("div");row.style.cssText="display:flex;align-items:center;gap:4px";
+    const btn=document.createElement("button");btn.className="staff-option";btn.style.flex="1";
     const dot=document.createElement("div");dot.className="staff-option-dot";dot.style.background=s.color;
     const nm=document.createElement("span");nm.className="staff-option-name";nm.textContent=s.name;
     btn.appendChild(dot);btn.appendChild(nm);
     if(s.id===myStaffId){const chk=document.createElement("span");chk.style.cssText="margin-left:auto;font-size:18px;color:var(--text-primary)";chk.textContent="✓";btn.appendChild(chk);}
-    btn.addEventListener("click",()=>{myStaffId=s.id;localStorage.setItem("my-staff-id",String(myStaffId));state.showStaffPick=false;render();});sheet.appendChild(btn);
+    btn.addEventListener("click",()=>{myStaffId=s.id;localStorage.setItem("my-staff-id",String(myStaffId));state.showStaffPick=false;render();});
+    const editBtn=document.createElement("button");
+    editBtn.style.cssText="width:34px;height:34px;border:none;background:transparent;cursor:pointer;font-size:15px;color:var(--text-tertiary);flex-shrink:0";
+    editBtn.textContent="✏️";
+    editBtn.setAttribute("aria-label","名前を編集");
+    editBtn.addEventListener("click",async(e)=>{
+      e.stopPropagation();
+      const newName=prompt("スタッフ名を編集",s.name);
+      if(newName&&newName.trim()){
+        s.name=newName.trim();
+        editBtn.textContent="⏳";
+        await saveStaffName(s.id,s.name);
+        state.showStaffPick=true;render();
+      }
+    });
+    row.appendChild(btn);row.appendChild(editBtn);
+    sheet.appendChild(row);
   });
   wrap.appendChild(sheet);return wrap;
 }
@@ -696,7 +734,7 @@ function renderSearchResults(area){
 }
 
 async function init(){
-  await Promise.all([fetchEvents(),fetchDevices()]);
+  await Promise.all([fetchEvents(),fetchDevices(),fetchStaffNames()]);
   document.getElementById("loading").style.display="none";
   document.getElementById("app").style.display="block";
   render();
