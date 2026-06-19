@@ -40,7 +40,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic",sa
 .legend-chip{display:flex;align-items:center;gap:4px;font-size:10px;color:var(--text-secondary)}
 .legend-dot{width:8px;height:8px;border-radius:2px;flex-shrink:0}
 .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:1px;background:var(--border-tertiary);border:1px solid var(--border-tertiary);border-radius:var(--radius-lg);overflow:hidden}
-.day-header{background:var(--bg-secondary);padding:4px 2px;text-align:center;font-size:10px;font-weight:600;color:var(--text-secondary)}
+.day-header{background:#e4e4e9;padding:6px 2px;text-align:center;font-size:13px;font-weight:700;color:var(--text-primary)}
 .day-cell{background:var(--bg-primary);padding:1px 2px;min-height:104px;cursor:pointer;overflow:hidden}
 .day-cell:active{opacity:0.7}
 .day-cell.other-month{background:var(--bg-tertiary)}
@@ -68,8 +68,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic",sa
 .day-ev-title{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .day-ev-sub{font-size:10px;color:var(--text-secondary);margin-top:1px}
 .section-label{font-size:10px;font-weight:600;color:var(--text-tertiary);padding:6px 12px 2px;background:var(--bg-secondary)}
-.add-row{display:flex;align-items:center;gap:6px;padding:9px 12px;border-top:1px solid var(--border-tertiary);cursor:pointer;font-size:12px;color:var(--text-tertiary)}
-.add-row:active{background:var(--bg-secondary)}
+.add-row{display:flex;align-items:center;justify-content:center;gap:8px;padding:16px 12px;border-top:1px solid var(--border-tertiary);cursor:pointer;font-size:16px;font-weight:600;color:#fff;background:var(--text-primary)}
+.add-row:active{opacity:0.8}
 .empty-day{padding:1.5rem 12px;text-align:center;font-size:12px;color:var(--text-tertiary)}
 .modal-wrap{min-height:100vh;position:fixed;inset:0;background:rgba(0,0,0,0.45);display:flex;align-items:flex-end;justify-content:center;z-index:200}
 .sheet{background:var(--bg-primary);border-radius:18px 18px 0 0;padding:1.25rem 1.25rem calc(1.5rem + env(safe-area-inset-bottom));width:100%;max-width:480px;height:100vh;height:100dvh;overflow-y:auto;display:flex;flex-direction:column}
@@ -609,19 +609,8 @@ function buildModal(){
   const h3=document.createElement("h3");const s=staffById(m.staffId);
   h3.innerHTML=`<span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:${s.color};margin-right:6px;vertical-align:1px"></span>${m.mode==="edit"?"予定を編集":"新しい予定"} <span style="font-size:11px;color:var(--text-secondary);font-weight:400">— ${s.name}</span>`;
   sheet.appendChild(h3);
-  const row1=document.createElement("div");row1.className="title-icon-row";
-  const iconBtn=document.createElement("button");iconBtn.className="icon-pick-btn";iconBtn.setAttribute("aria-label","アイコンを選択");
-  const icoEl=renderIconEl(m.iconId,22);if(icoEl)iconBtn.appendChild(icoEl);else iconBtn.textContent="🖼️";
-  iconBtn.addEventListener("click",()=>{state.showIconPicker=true;render();});
-  const tf=document.createElement("div");tf.className="form-row";tf.style.flex="1";tf.style.marginBottom="0";
-  const tl=document.createElement("label");tl.textContent="タイトル";tf.appendChild(tl);
-  const ti=document.createElement("input");ti.type="text";ti.placeholder="タイトル";ti.value=m.title||"";ti.addEventListener("input",e=>m.title=e.target.value);tf.appendChild(ti);
-  row1.appendChild(iconBtn);row1.appendChild(tf);sheet.appendChild(row1);
-  function frow(lbl,el,extraClass){const d=document.createElement("div");d.className="form-row"+(extraClass?" "+extraClass:"");const l=document.createElement("label");l.textContent=lbl;d.appendChild(l);d.appendChild(el);sheet.appendChild(d);}
-  const di=document.createElement("input");di.type="date";di.value=m.date;di.addEventListener("input",e=>m.date=e.target.value);frow("日付",di);
-  const st=document.createElement("input");st.type="time";st.value=m.startTime;st.addEventListener("input",e=>m.startTime=e.target.value);frow("開始時間",st);
-  const memo=document.createElement("textarea");memo.placeholder="メモ・詳細（任意）";memo.value=m.memo||"";memo.addEventListener("input",e=>m.memo=e.target.value);frow("メモ・詳細",memo,"memo-row");
-  const acts=document.createElement("div");acts.className="sheet-actions";
+
+  const acts=document.createElement("div");acts.className="sheet-actions";acts.style.marginTop="0";acts.style.marginBottom="14px";
   if(m.mode==="edit"){
     const del=document.createElement("button");del.className="btn-delete";del.textContent="削除";
     del.addEventListener("click",async()=>{
@@ -648,7 +637,22 @@ function buildModal(){
     }catch(e){alert("保存に失敗しました。通信状態を確認してください。");}
     state.modal=null;state.view="month";state.current=new Date(m.date);render();
   });
-  acts.appendChild(cancel);acts.appendChild(save);sheet.appendChild(acts);wrap.appendChild(sheet);return wrap;
+  acts.appendChild(cancel);acts.appendChild(save);
+  sheet.appendChild(acts);
+
+  const row1=document.createElement("div");row1.className="title-icon-row";
+  const iconBtn=document.createElement("button");iconBtn.className="icon-pick-btn";iconBtn.setAttribute("aria-label","アイコンを選択");
+  const icoEl=renderIconEl(m.iconId,22);if(icoEl)iconBtn.appendChild(icoEl);else iconBtn.textContent="🖼️";
+  iconBtn.addEventListener("click",()=>{state.showIconPicker=true;render();});
+  const tf=document.createElement("div");tf.className="form-row";tf.style.flex="1";tf.style.marginBottom="0";
+  const tl=document.createElement("label");tl.textContent="タイトル";tf.appendChild(tl);
+  const ti=document.createElement("input");ti.type="text";ti.placeholder="タイトル";ti.value=m.title||"";ti.addEventListener("input",e=>m.title=e.target.value);tf.appendChild(ti);
+  row1.appendChild(iconBtn);row1.appendChild(tf);sheet.appendChild(row1);
+  function frow(lbl,el,extraClass){const d=document.createElement("div");d.className="form-row"+(extraClass?" "+extraClass:"");const l=document.createElement("label");l.textContent=lbl;d.appendChild(l);d.appendChild(el);sheet.appendChild(d);}
+  const di=document.createElement("input");di.type="date";di.value=m.date;di.addEventListener("input",e=>m.date=e.target.value);frow("日付",di);
+  const st=document.createElement("input");st.type="time";st.value=m.startTime;st.addEventListener("input",e=>m.startTime=e.target.value);frow("開始時間",st);
+  const memo=document.createElement("textarea");memo.placeholder="メモ・詳細（任意）";memo.value=m.memo||"";memo.addEventListener("input",e=>m.memo=e.target.value);frow("メモ・詳細",memo,"memo-row");
+  wrap.appendChild(sheet);return wrap;
 }
 
 function buildIconPicker(){
